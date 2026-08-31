@@ -64,3 +64,11 @@ class LoginSerializer(serializers.Serializer):
                 raise serializers.ValidationError('Invalid Credentials')
         else:
             raise serializers.ValidationError('Invalid Credentials')
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email"]
+        read_only_fields = ["id", "username", "email"]
