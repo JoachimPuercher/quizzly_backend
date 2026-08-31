@@ -1,10 +1,11 @@
 from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenBlacklistView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from .authentication import JWTCookieAuthentication
 
 
 
@@ -63,3 +64,35 @@ class LoginView(TokenObtainPairView):
             }
 
         return response
+
+def delete_jwt_cookies(response:Response):
+    response.delete_cookie('access_token', path='/')
+    response.delete_cookie('refresh_token', path='/')
+
+class LogoutView(TokenBlacklistView):
+
+    authentication_classes = [JWTCookieAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs) -> Response:
+
+        print(request.COOKIES)
+        try:
+            refresh_token = request.COOKIES.get("refresh_token")
+            serializer = self.get_serializer(data={"refresh" : refresh_token})
+
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0]) from e
+
+            response = Response({"detail": "Log-Out successfully! All Tokens will be deleted. Refresh token is now invalid."}, status=status.HTTP_200_OK)
+            delete_jwt_cookies(response)
+            return response
+
+        except TokenError:
+            # If the token is already invalid/expired, still clear cookies
+            response = Response({"detail": "Log-Out successfully! All Tokens will be deleted. Refresh token is now invalid."}, status=status.HTTP_400_BAD_REQUEST)
+            delete_jwt_cookies(response)
+            return response
+
