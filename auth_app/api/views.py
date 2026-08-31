@@ -26,7 +26,7 @@ class RegistrationView(generics.CreateAPIView):
         return Response(data, status=status.HTTP_201_CREATED)
 
 
-class CookieTokenObtainPairView(TokenObtainPairView):
+class LoginView(TokenObtainPairView):
 # Self created class from the simplejwt class.
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
