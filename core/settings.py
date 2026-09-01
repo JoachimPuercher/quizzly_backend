@@ -27,7 +27,7 @@ load_dotenv(BASE_DIR / '.env')
 # SECURITY WARNING: keep the secret key used in production secret!
 # no fallback on purpose: a missing key should stop the server, not run with a default
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-
+GEMINI_API_KEY = os.environ['GEMINI_API_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ['DEBUG'] == 'True'
