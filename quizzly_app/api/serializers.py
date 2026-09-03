@@ -43,7 +43,7 @@ class QuizSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'video_url',
-            'questions'
+            'questions',
             ]
         read_only_fields = ['video_url']
 
