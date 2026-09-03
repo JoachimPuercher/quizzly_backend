@@ -1,5 +1,5 @@
 from rest_framework import generics, status
-from .serializers import YoutubeUrlSerializer, QuizSerializer, RetrieveQuizSerializer
+from .serializers import YoutubeUrlSerializer, QuizSerializer, UpdateQuizSerializer, RetrieveQuizSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from quizzly_app.services.yt_dlp import fetch_youtube
@@ -43,3 +43,17 @@ class CreateQuizView(generics.ListCreateAPIView):
         queryset = Quiz.objects.filter(owner=request.user)
         serializer = RetrieveQuizSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class RetrieveUpdateDestroyQuizView(generics.RetrieveUpdateDestroyAPIView):
+
+    queryset = Quiz.objects.all()
+    lookup_field = "pk"
+    lookup_url_kwarg = "id"
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return UpdateQuizSerializer
+        else:
+            return RetrieveQuizSerializer
+
