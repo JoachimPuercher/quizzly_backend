@@ -34,6 +34,6 @@ class CreateQuizView(generics.CreateAPIView):
 
         quiz_serializer = QuizSerializer(data=quiz_data)
         quiz_serializer.is_valid(raise_exception=True)
-        quiz_serializer.save(video_url=youtube_url)
+        quiz_serializer.save(video_url=youtube_url, owner=request.user)
 
         return Response(data=quiz_serializer.data, status=status.HTTP_201_CREATED)
