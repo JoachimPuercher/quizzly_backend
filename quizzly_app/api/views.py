@@ -1,13 +1,14 @@
 from rest_framework import generics, status
-from .serializers import YoutubeUrlSerializer, QuizSerializer
+from .serializers import YoutubeUrlSerializer, QuizSerializer, RetrieveQuizSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from quizzly_app.services.yt_dlp import fetch_youtube
 from yt_dlp.utils import DownloadError
 from quizzly_app.services.transcribe import transcribe_audio_to_text
 from quizzly_app.services.gemini import create_quiz
+from quizzly_app.models import Quiz
 
-class CreateQuizView(generics.CreateAPIView):
+class CreateQuizView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -37,3 +38,8 @@ class CreateQuizView(generics.CreateAPIView):
         quiz_serializer.save(video_url=youtube_url, owner=request.user)
 
         return Response(data=quiz_serializer.data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        queryset = Quiz.objects.filter(owner=request.user)
+        serializer = RetrieveQuizSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

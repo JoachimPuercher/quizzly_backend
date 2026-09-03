@@ -53,3 +53,22 @@ class QuizSerializer(serializers.ModelSerializer):
         for question in questions_data:
             Question.objects.create(quiz=quiz, **question)
         return quiz
+
+
+class RetrieveQuizSerializer(serializers.ModelSerializer):
+
+    questions = QuestionSerializer(many=True)
+
+    class Meta:
+        model = Quiz
+
+        fields = [
+            'id',
+            'title',
+            'description',
+            'created_at',
+            'updated_at',
+            'video_url',
+            'questions',
+            ]
+        read_only_fields = ['video_url']
