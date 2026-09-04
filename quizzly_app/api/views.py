@@ -7,6 +7,7 @@ from yt_dlp.utils import DownloadError
 from quizzly_app.services.transcribe import transcribe_audio_to_text
 from quizzly_app.services.gemini import create_quiz
 from quizzly_app.models import Quiz
+from .permissions import IsQuizOwner
 
 class CreateQuizView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -46,6 +47,8 @@ class CreateQuizView(generics.ListCreateAPIView):
 
 
 class RetrieveUpdateDestroyQuizView(generics.RetrieveUpdateDestroyAPIView):
+
+    permission_classes = [IsAuthenticated, IsQuizOwner]
 
     queryset = Quiz.objects.all()
     lookup_field = "pk"
