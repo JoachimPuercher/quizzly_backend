@@ -17,6 +17,9 @@ class Quiz(models.Model):
         blank=False,
     )
 
+    def __str__(self):
+        return self.title
+
 
 class Question(models.Model):
     """A single multiple choice question belonging to a quiz."""
@@ -31,3 +34,6 @@ class Question(models.Model):
     answer = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.question_title} FROM QUIZ: {self.quiz}" 
