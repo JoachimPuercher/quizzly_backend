@@ -39,7 +39,6 @@ class CreateQuizView(generics.ListCreateAPIView):
         try:
             video_text = transcribe_audio_to_text(youtube_audio)
         except Exception as e:
-            print(f"TRANSCRIBE ERROR: {type(e).__name__}: {e}")
             return Response(
                 {"detail": "Audio to text transcribtion failed!"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -49,8 +48,8 @@ class CreateQuizView(generics.ListCreateAPIView):
             quiz_data = create_quiz(video_text).model_dump()
         except Exception as e:
             return Response(
-                data={{type(e).__name__}: {e}},
-                status=status.HTTP_200_OK,
+                {"detail": "Quiz generation failed!"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         quiz_serializer = QuizSerializer(data=quiz_data)
