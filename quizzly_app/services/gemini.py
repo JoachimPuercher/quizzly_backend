@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 
 class Question(BaseModel):
+    """Schema of one generated multiple choice question."""
+
     question_title: str = Field(description="The question itself.")
     question_options: List[str] = Field(
         min_length=4,
@@ -20,6 +22,8 @@ class Question(BaseModel):
 
 
 class Quiz(BaseModel):
+    """Schema the model has to fill when generating a quiz."""
+
     title: str = Field(description="The name of the quiz.")
     description: str = Field(description="A short summary of what the quiz is about.")
     questions: List[Question] = Field(
