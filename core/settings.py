@@ -148,6 +148,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated'
     ],
+    # Scopes used by the throttle classes in auth_app/api/throttles.py and
+    # quizzly_app/api/throttles.py; there is no global throttle.
+    'DEFAULT_THROTTLE_RATES': {
+        'auth': '10/min',
+        'quiz_create': '5/hour',
+    },
 }
 
 SIMPLE_JWT = {

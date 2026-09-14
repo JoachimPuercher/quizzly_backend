@@ -15,12 +15,14 @@ from .serializers import (
     UpdateQuizSerializer,
     YoutubeUrlSerializer,
 )
+from .throttles import QuizCreateRateThrottle
 
 
 class CreateQuizView(generics.ListCreateAPIView):
     """List the quizzes of the current user and create new ones from a video."""
 
     permission_classes = [IsAuthenticated]
+    throttle_classes = [QuizCreateRateThrottle]
 
     def post(self, request, *args, **kwargs):
         """Download, transcribe and turn a YouTube video into a stored quiz."""

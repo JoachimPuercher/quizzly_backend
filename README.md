@@ -42,6 +42,9 @@ JWT via httpOnly cookies. `login` sets `access_token` and `refresh_token`; the t
 never part of the response body. Every following request is authenticated from those
 cookies, so no `Authorization` header is needed.
 
+Rate limits: `register/` and `login/` allow 10 requests per minute per IP address,
+creating a quiz is limited to 5 per hour per user. Exceeding a limit returns `429`.
+
 ## Endpoints
 
 All routes are prefixed with `/api/`.

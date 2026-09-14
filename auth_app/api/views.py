@@ -6,6 +6,7 @@ from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenBlacklistView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from .authentication import JWTCookieAuthentication
+from .throttles import AuthRateThrottle
 
 
 
@@ -14,6 +15,7 @@ class RegistrationView(generics.CreateAPIView):
     """Registers a new user and returns the auth token right away."""
 
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
     serializer_class = RegisterSerializer
 
     def create(self, request):
@@ -29,6 +31,8 @@ class RegistrationView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
 # Self created class from the simplejwt class.
+    throttle_classes = [AuthRateThrottle]
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
 
