@@ -3,6 +3,16 @@ from typing import List
 from google import genai
 from pydantic import BaseModel, Field
 
+PROMPT = """Create a quiz with exactly 10 questions from the following text.
+The quiz needs a title and a short description. Every question has exactly
+four possible answers. One of them is correct, the other three are wrong but
+related to the topic of the text, so that the choice is not obvious. Vary the
+position of the correct answer between the questions, so it is not always in
+the same place in the list. The answer field has to repeat the correct option
+exactly as it appears in question_options.
+
+{transcript}"""
+
 
 class Question(BaseModel):
     """Schema of one generated multiple choice question."""
@@ -26,7 +36,8 @@ class Quiz(BaseModel):
 
     title: str = Field(description="The name of the quiz.")
     description: str = Field(
-        description="A short summary of what the quiz is about.")
+        description="A short summary of what the quiz is about.",
+    )
     questions: List[Question] = Field(
         min_length=10,
         max_length=10,
@@ -34,23 +45,13 @@ class Quiz(BaseModel):
     )
 
 
-def create_quiz(file_input: str) -> Quiz:
+def create_quiz(transcript: str) -> Quiz:
     """Turn a video transcript into a quiz with ten questions."""
     client = genai.Client()
 
-    prompt = f"""Create a quiz with exactly 10 questions from the following
-    text. The quiz needs a title and a short description. Every question has
-    exactly four possible answers. One of them is correct, the other three are
-    wrong but related to the topic of the text, so that the choice is not
-    obvious. Vary the position of the correct answer between the questions,
-    so it is not always in the same place in the list. The answer field has
-    to repeat the correct option exactly as it appears in question_options.
-
-    {file_input}"""
-
     interaction = client.interactions.create(
         model="gemini-3.6-flash",
-        input=prompt,
+        input=PROMPT.format(transcript=transcript),
         response_format={
             "type": "text",
             "mime_type": "application/json",
