@@ -2,6 +2,16 @@ from rest_framework import serializers
 
 from quizzly_app.models import Quiz, Question
 
+QUIZ_FIELDS = [
+    'id',
+    'title',
+    'description',
+    'created_at',
+    'updated_at',
+    'video_url',
+    'questions',
+]
+
 
 class YoutubeUrlSerializer(serializers.Serializer):
     """Validate the YouTube URL a quiz is generated from."""
@@ -11,10 +21,9 @@ class YoutubeUrlSerializer(serializers.Serializer):
     def validate_url(self, value):
         # Only the desktop watch URL is supported; the fixed host also
         # rules out SSRF.
-        if value.startswith("https://www.youtube.com/watch?v="):
-            return value
-        else:
+        if not value.startswith("https://www.youtube.com/watch?v="):
             raise serializers.ValidationError("Not a valid youtube URL!")
+        return value
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -39,15 +48,7 @@ class QuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        fields = [
-            'id',
-            'title',
-            'description',
-            'created_at',
-            'updated_at',
-            'video_url',
-            'questions',
-        ]
+        fields = QUIZ_FIELDS
         read_only_fields = ['video_url']
 
     def create(self, validated_data):
@@ -62,42 +63,22 @@ class QuizSerializer(serializers.ModelSerializer):
 class RetrieveQuizSerializer(serializers.ModelSerializer):
     """Read serializer returning a quiz with all of its questions."""
 
-    questions = QuestionSerializer(many=True)
+    questions = QuestionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Quiz
-        fields = [
-            'id',
-            'title',
-            'description',
-            'created_at',
-            'updated_at',
-            'video_url',
-            'questions',
-        ]
-        read_only_fields = ['video_url']
+        fields = QUIZ_FIELDS
+        read_only_fields = QUIZ_FIELDS
 
 
 class UpdateQuizSerializer(serializers.ModelSerializer):
     """Update serializer that limits writes to title and description."""
 
-    questions = QuestionSerializer(many=True)
+    # Meta.read_only_fields does not apply to explicitly declared fields,
+    # so the questions have to be marked read-only right here.
+    questions = QuestionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Quiz
-        fields = [
-            'id',
-            'title',
-            'description',
-            'created_at',
-            'updated_at',
-            'video_url',
-            'questions',
-        ]
-        read_only_fields = [
-            'id',
-            'created_at',
-            'updated_at',
-            'video_url',
-            'questions',
-        ]
+        fields = QUIZ_FIELDS
+        read_only_fields = ['id', 'created_at', 'updated_at', 'video_url']

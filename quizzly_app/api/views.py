@@ -23,6 +23,8 @@ class CreateQuizView(generics.ListCreateAPIView):
 
     permission_classes = [IsAuthenticated]
     throttle_classes = [QuizCreateRateThrottle]
+    # Describes the POST body for OPTIONS and the browsable API.
+    serializer_class = YoutubeUrlSerializer
 
     def post(self, request, *args, **kwargs):
         """Download, transcribe and turn a YouTube video into a stored quiz."""
@@ -75,6 +77,8 @@ class RetrieveUpdateDestroyQuizView(generics.RetrieveUpdateDestroyAPIView):
 
     permission_classes = [IsAuthenticated, IsQuizOwner]
     queryset = Quiz.objects.all()
+    # PUT would need the nested questions to be writable, so only PATCH.
+    http_method_names = ["get", "patch", "delete", "head", "options"]
     lookup_field = "pk"
     lookup_url_kwarg = "id"
 
