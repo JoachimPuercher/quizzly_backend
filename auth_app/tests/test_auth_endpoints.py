@@ -104,4 +104,4 @@ class TokenRefreshTests(APITestCase):
     def test_refresh_without_cookie_fails(self):
         response = self.client.post(reverse('token_refresh'))
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

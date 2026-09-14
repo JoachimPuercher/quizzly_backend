@@ -1,167 +1,160 @@
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .serializers import RegisterSerializer, UserSerializer
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.views import (
+    TokenBlacklistView,
     TokenObtainPairView,
     TokenRefreshView,
-    TokenBlacklistView,
 )
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from .authentication import JWTCookieAuthentication
+
+from .serializers import RegisterSerializer, UserSerializer
 from .throttles import AuthRateThrottle
+
+
+def delete_jwt_cookies(response):
+    """Expire both JWT cookies in the browser."""
+    response.delete_cookie("access_token", path="/", samesite="Lax")
+    response.delete_cookie("refresh_token", path="/", samesite="Lax")
 
 
 class RegistrationView(generics.CreateAPIView):
     """Register a new user. Open to everyone, rate limited per IP."""
 
+    # A stale access cookie must not get in the way of registering.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [AuthRateThrottle]
     serializer_class = RegisterSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        data = {
-            "detail": "User created sucessfully!"
-        }
-
-        return Response(data, status=status.HTTP_201_CREATED)
+        return Response(
+            {"detail": "User created successfully!"},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class LoginView(TokenObtainPairView):
-    """Check the credentials and hand out the tokens as httpOnly cookies.
-
-    Built on the simplejwt view; only the response is changed so that the
-    tokens travel in cookies instead of the body.
-    """
+    """Check the credentials and hand out the tokens as httpOnly cookies."""
 
     throttle_classes = [AuthRateThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-
         try:
             serializer.is_valid(raise_exception=True)
         except TokenError as e:
             # TokenError is not a DRF exception; translate it into a 401.
             raise InvalidToken(e.args[0]) from e
 
-        response = Response(serializer.validated_data,
-                            status=status.HTTP_200_OK)
-        access_token = response.data.get("access")
-        refresh_token = response.data.get("refresh")
-
-        # Set the tokens as cookies directly on the response. httponly keeps
-        # them away from JavaScript, SameSite=Lax stops the browser from
-        # sending them with cross-site POST requests (CSRF).
+        response = Response(
+            {
+                "detail": "Login successfully!",
+                "user": UserSerializer(serializer.user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+        # httponly keeps the cookies away from JavaScript, SameSite=Lax stops
+        # the browser from sending them with cross-site POST requests (CSRF),
+        # secure means HTTPS only (browsers treat localhost as secure too),
+        # max_age lets the cookie expire together with its token.
         response.set_cookie(
             key="access_token",
-            value=access_token,
+            value=serializer.validated_data["access"],
+            max_age=api_settings.ACCESS_TOKEN_LIFETIME,
             httponly=True,
             secure=True,
-            samesite="Lax"
+            samesite="Lax",
+            path="/",
         )
         response.set_cookie(
             key="refresh_token",
-            value=refresh_token,
+            value=serializer.validated_data["refresh"],
+            max_age=api_settings.REFRESH_TOKEN_LIFETIME,
             httponly=True,
             secure=True,
-            samesite="Lax"
+            samesite="Lax",
+            path="/",
         )
-        # Replace the body so that no token is part of the response.
-        response.data = {
-            "detail": "Login successfully!",
-            "user": UserSerializer(instance=serializer.user).data
-
-        }
-
         return response
 
 
-def delete_jwt_cookies(response: Response):
-    """Expire both JWT cookies in the browser."""
-    response.delete_cookie('access_token', path='/')
-    response.delete_cookie('refresh_token', path='/')
-
-
 class LogoutView(TokenBlacklistView):
-    """Blacklist the refresh token and clear both cookies."""
+    """Blacklist the refresh token and clear both cookies.
 
-    authentication_classes = [JWTCookieAuthentication]
-    permission_classes = [IsAuthenticated]
+    Only the refresh cookie is needed, so logging out still works after
+    the short lived access token has expired. The cookies are cleared in
+    every case, because a token the server rejects is of no use in the
+    browser either.
+    """
 
-    def post(self, request, *args, **kwargs) -> Response:
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get("refresh_token")
+        if refresh_token is None:
+            response = Response(
+                {"detail": "Refresh token not found."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+            delete_jwt_cookies(response)
+            return response
+
+        serializer = self.get_serializer(data={"refresh": refresh_token})
         try:
-            refresh_token = request.COOKIES.get("refresh_token")
-            serializer = self.get_serializer(data={"refresh": refresh_token})
-
-            try:
-                serializer.is_valid(raise_exception=True)
-            except TokenError as e:
-                raise InvalidToken(e.args[0]) from e
-
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
             response = Response(
-                {
-                    "detail": (
-                        "Log-Out successfully! All Tokens will be deleted. "
-                        "Refresh token is now invalid."
-                    ),
-                },
-                status=status.HTTP_200_OK,
+                {"detail": str(e)},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
             delete_jwt_cookies(response)
             return response
 
-        except TokenError:
-            # If the token is already invalid/expired, still clear cookies
-            response = Response(
-                {
-                    "detail": (
-                        "Log-Out successfully! All Tokens will be deleted. "
-                        "Refresh token is now invalid."
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-            delete_jwt_cookies(response)
-            return response
+        response = Response(
+            {
+                "detail": (
+                    "Log-Out successfully! All Tokens will be deleted. "
+                    "Refresh token is now invalid."
+                ),
+            },
+            status=status.HTTP_200_OK,
+        )
+        delete_jwt_cookies(response)
+        return response
 
 
 class CookieTokenRefreshView(TokenRefreshView):
     """Issue a new access token from the refresh cookie."""
 
     def post(self, request, *args, **kwargs):
-
         refresh_token = request.COOKIES.get("refresh_token")
-
         if refresh_token is None:
             return Response(
-                {"message": "Refresh token not found!"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Refresh token not found."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         serializer = self.get_serializer(data={"refresh": refresh_token})
-
         try:
             serializer.is_valid(raise_exception=True)
-        except:
-            return Response(
-                {"message": "Refresh token not found!"},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+        except TokenError as e:
+            raise InvalidToken(e.args[0]) from e
 
-        access_token = serializer.validated_data.get("access")
-        response = Response({"detail": "Token refreshed."})
-
-        # Same cookie attributes as in LoginView.
+        response = Response(
+            {"detail": "Token refreshed"},
+            status=status.HTTP_200_OK,
+        )
+        # Same attributes as in LoginView.
         response.set_cookie(
             key="access_token",
-            value=access_token,
+            value=serializer.validated_data["access"],
+            max_age=api_settings.ACCESS_TOKEN_LIFETIME,
             httponly=True,
             secure=True,
-            samesite="Lax"
+            samesite="Lax",
+            path="/",
         )
-
         return response
