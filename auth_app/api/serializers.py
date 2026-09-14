@@ -1,18 +1,45 @@
+from django.contrib.auth import password_validation
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     """Create a user from username, email and a confirmed password."""
 
-    confirmed_password = serializers.CharField(max_length=100, write_only=True)
+    # User.email is blank=True on the model, which would make it optional here.
+    email = serializers.EmailField(required=True)
+    confirmed_password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
         fields = ['username', 'email', 'password', 'confirmed_password']
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
         }
+
+    def validate_email(self, value):
+        """Reject duplicate addresses and store them lower cased."""
+        email = value.lower()
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError('Email already exists')
+        return email
+
+    def validate(self, values):
+        """Both passwords have to match and pass the configured validators."""
+        if values['password'] != values['confirmed_password']:
+            raise serializers.ValidationError('Passwords do not match')
+
+        # An unsaved user lets the similarity validator compare against
+        # username and email.
+        new_user = User(username=values['username'], email=values['email'])
+        try:
+            password_validation.validate_password(
+                values['password'], user=new_user)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({'password': e.messages})
+
+        return values
 
     def save(self):
         """Create the user with a hashed password and the matching profile."""
@@ -27,21 +54,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
-    def validate_email(self, value):
-        """Reject duplicate addresses and store them lower cased."""
-        new_mail = value.lower()
-        if User.objects.filter(email=new_mail).exists():
-            raise serializers.ValidationError('Email already exists')
-        else:
-            return new_mail
-
-    def validate(self, values):
-        """Both password fields have to match."""
-        if values['password'] != values['confirmed_password']:
-            raise serializers.ValidationError('Password do not match')
-        else:
-            return values
-
 
 class UserSerializer(serializers.ModelSerializer):
     """Public representation of a user, returned after login."""
@@ -49,4 +61,4 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "email"]
-        read_only_fields = ["id", "username", "email"]
+        read_only_fields = fields
