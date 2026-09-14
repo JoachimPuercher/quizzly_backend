@@ -1,8 +1,7 @@
 from rest_framework import generics, status
-from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -94,8 +93,6 @@ class LogoutView(TokenBlacklistView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs) -> Response:
-
-        print(request.COOKIES)
         try:
             refresh_token = request.COOKIES.get("refresh_token")
             serializer = self.get_serializer(data={"refresh": refresh_token})

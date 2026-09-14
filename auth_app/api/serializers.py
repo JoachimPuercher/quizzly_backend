@@ -43,33 +43,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             return values
 
 
-class LoginSerializer(serializers.Serializer):
-    """Checks the credentials and hands the matching user to the view."""
-
-    username = serializers.CharField(max_length=100)
-    password = serializers.CharField(write_only=True)
-
-    def validate(self, values):
-        """Look the user up by name and check the password."""
-        new_username = values['username']
-        user = User.objects.filter(username=new_username).first()
-
-        if user:
-            pw_valid = user.check_password(values['password'])
-
-            if pw_valid:
-                # the view needs the instance, so it travels on in
-                # validated_data
-                values['user'] = user
-                return values
-            else:
-                # same message for both cases, otherwise it would leak
-                # existing usernames
-                raise serializers.ValidationError('Invalid Credentials')
-        else:
-            raise serializers.ValidationError('Invalid Credentials')
-
-
 class UserSerializer(serializers.ModelSerializer):
     """Public representation of a user, returned after login."""
 
