@@ -9,6 +9,8 @@ class YoutubeUrlSerializer(serializers.Serializer):
     url = serializers.URLField(max_length=500)
 
     def validate_url(self, value):
+        # Only the desktop watch URL is supported; the fixed host also
+        # rules out SSRF.
         if value.startswith("https://www.youtube.com/watch?v="):
             return value
         else:
@@ -49,7 +51,7 @@ class QuizSerializer(serializers.ModelSerializer):
         read_only_fields = ['video_url']
 
     def create(self, validated_data):
-        # Nested writes are not supported by default, so create both levels here.
+        # Nested writes are not supported by default, so create both levels.
         questions_data = validated_data.pop('questions')
         quiz = Quiz.objects.create(**validated_data)
         for question in questions_data:

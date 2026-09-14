@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    """Creates a User together with its UserProfile from a single registration payload."""
+    """Create a user from username, email and a confirmed password."""
 
     confirmed_password = serializers.CharField(max_length=100, write_only=True)
 
@@ -20,7 +20,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             username=self.validated_data['username'],
             email=self.validated_data['email'],
         )
-        # set_password hashes the value, a plain assignment would store it in clear text
+        # set_password hashes the value, a plain assignment would store it
+        # in clear text
         user.set_password(self.validated_data['password'])
         user.save()
 
@@ -49,6 +50,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, values):
+        """Look the user up by name and check the password."""
         new_username = values['username']
         user = User.objects.filter(username=new_username).first()
 
@@ -56,17 +58,20 @@ class LoginSerializer(serializers.Serializer):
             pw_valid = user.check_password(values['password'])
 
             if pw_valid:
-                # the view needs the instance, so it travels on in validated_data
+                # the view needs the instance, so it travels on in
+                # validated_data
                 values['user'] = user
                 return values
             else:
-                # same message for both cases, otherwise it would leak existing usernames
+                # same message for both cases, otherwise it would leak
+                # existing usernames
                 raise serializers.ValidationError('Invalid Credentials')
         else:
             raise serializers.ValidationError('Invalid Credentials')
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Public representation of a user, returned after login."""
 
     class Meta:
         model = User

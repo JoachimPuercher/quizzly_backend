@@ -19,7 +19,7 @@ from .throttles import QuizCreateRateThrottle
 
 
 class CreateQuizView(generics.ListCreateAPIView):
-    """List the quizzes of the current user and create new ones from a video."""
+    """List the quizzes of the current user and create new ones."""
 
     permission_classes = [IsAuthenticated]
     throttle_classes = [QuizCreateRateThrottle]
@@ -79,7 +79,7 @@ class RetrieveUpdateDestroyQuizView(generics.RetrieveUpdateDestroyAPIView):
     lookup_url_kwarg = "id"
 
     def get_serializer_class(self):
-        """Use the restricted serializer for writes and the full one for reads."""
+        """Use the restricted serializer for writes, the full one for reads."""
         if self.request.method == "PATCH":
             return UpdateQuizSerializer
         else:

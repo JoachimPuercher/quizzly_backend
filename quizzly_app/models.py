@@ -36,4 +36,4 @@ class Question(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.question_title} FROM QUIZ: {self.quiz}" 
+        return f"{self.question_title} FROM QUIZ: {self.quiz}"

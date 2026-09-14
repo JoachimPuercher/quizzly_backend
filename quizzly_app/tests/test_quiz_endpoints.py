@@ -92,7 +92,8 @@ class QuizDetailTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Quiz.objects.filter(pk=self.quiz.pk).exists())
-        self.assertFalse(Question.objects.filter(quiz_id=self.quiz.pk).exists())
+        self.assertFalse(Question.objects.filter(
+            quiz_id=self.quiz.pk).exists())
 
 
 class QuizCreateThrottleTests(APITestCase):

@@ -3,7 +3,7 @@ import yt_dlp
 
 def fetch_youtube(url: str):
     """Download the audio track of a video and return its local file path."""
-    # See help(yt_dlp.YoutubeDL) for all available options and public functions.
+    # See help(yt_dlp.YoutubeDL) for all available options.
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": "transcribed_data/%(id)s.%(ext)s",
