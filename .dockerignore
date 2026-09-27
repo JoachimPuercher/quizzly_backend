@@ -1,0 +1,24 @@
+# Environments
+.env
+venv/
+.venv/
+env/
+.env*
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Django
+db.sqlite3
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# claude
+CLAUDE.md
+
+# Transcribed data
+transcribed_data/
