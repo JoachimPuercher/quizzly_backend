@@ -37,7 +37,7 @@ DEBUG = os.environ['DEBUG'] == 'True'
 # comma separated lists, see .env.example
 ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(",")
 CORS_ALLOWED_ORIGINS = os.environ['CORS_ALLOWED_ORIGINS'].split(",")
-
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # Application definition
 
 INSTALLED_APPS = [
