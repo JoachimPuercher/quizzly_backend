@@ -6,10 +6,22 @@ services:
     env_file: .env
     environment:
       SQLITE_PATH: /app/data/db.sqlite3
+      YTDLP_POT_PROVIDER_URL: http://pot-provider:4416
     volumes:
       - db_data:/app/data
       - transcribed_data:/app/transcribed_data
       - whisper_cache:/root/.cache/whisper
+    depends_on:
+      - pot-provider
+    restart: unless-stopped
+
+  # Generates the proof-of-origin tokens YouTube demands from datacenter IPs.
+  # Only reachable from the web container over the compose network, so no
+  # ports are published; the image tag matches the plugin pinned in
+  # requirements.txt.
+  pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:2.0.0
+    init: true
     restart: unless-stopped
 
 volumes:

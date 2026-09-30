@@ -30,6 +30,9 @@ load_dotenv(BASE_DIR / '.env')
 # with a default
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 GEMINI_API_KEY = os.environ['GEMINI_API_KEY']
+# Optional: address of the bgutil PO token provider, see docker-compose.yml.
+# Empty means yt-dlp runs without a provider, which is fine on a home IP.
+YTDLP_POT_PROVIDER_URL = os.environ.get('YTDLP_POT_PROVIDER_URL', '')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ['DEBUG'] == 'True'

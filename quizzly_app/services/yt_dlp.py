@@ -23,6 +23,15 @@ def fetch_youtube(url: str) -> str:
         "no_warnings": True,
         "noplaylist": True,
     }
+    if settings.YTDLP_POT_PROVIDER_URL:
+        # The bgutil plugin asks this service for the proof-of-origin tokens
+        # YouTube demands from datacenter IPs. Values are lists, that is how
+        # yt-dlp represents extractor arguments.
+        ydl_opts["extractor_args"] = {
+            "youtubepot-bgutilhttp": {
+                "base_url": [settings.YTDLP_POT_PROVIDER_URL],
+            }
+        }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         # Look at the metadata first so nothing is downloaded for a
         # rejected video.

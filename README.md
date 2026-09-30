@@ -150,6 +150,13 @@ The repository is configured for development. Before deploying:
 Known limitation: a quiz is generated inside the request, which can take minutes. A job
 queue with a status endpoint would be the next step for real traffic.
 
+YouTube treats datacenter IPs as bots and refuses downloads from them. The compose file
+therefore runs [bgutil-ytdlp-pot-provider](https://github.com/Brainicism/bgutil-ytdlp-pot-provider)
+as a second container and points yt-dlp at it via `YTDLP_POT_PROVIDER_URL`. If YouTube
+still answers "Sign in to confirm you're not a bot", the remaining option is passing the
+cookies of a throwaway account, see the
+[yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies).
+
 ## Project layout
 
 ```
