@@ -30,6 +30,22 @@ Copy `.env.example` to `.env` and fill in your own values:
 
 Lists are comma separated, without spaces and without a trailing comma.
 
+Generate a secret key locally, with the venv active:
+
+```powershell
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+On a server without Django, the standard library is enough:
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+Docker Compose reads `$` in the `.env` as the start of a variable and silently drops what
+follows. Django's generator can produce `$`, so either wrap the key in single quotes or use
+the second command, whose output only contains letters, digits, `-` and `_`.
+
 Then create the database and start the server:
 
 ```powershell
