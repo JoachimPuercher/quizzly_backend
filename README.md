@@ -71,8 +71,8 @@ cookies, so no `Authorization` header is needed.
   would need `SameSite=None` plus a CSRF token, which this project does not implement.
 - **Cookie flags.** `httponly` and `secure` always. Browsers treat `localhost`
   as a secure context, so the cookies also work in development without TLS.
-- **Passwords** are checked against Django's configured validators (minimum length,
-  common passwords, similarity to username and email, not purely numeric).
+- **Passwords** only have to match their confirmation. Django's password validators are
+  deliberately not applied on registration; the frontend owns the password rules.
 - **Rate limits.** `register/` and `login/` allow 10 requests per minute per IP address.
   Creating a quiz is limited to 5 per hour per user. Exceeding a limit returns `429`.
   The endpoint documentation lists no limits; these are a deliberate addition, because

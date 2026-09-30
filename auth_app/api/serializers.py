@@ -1,6 +1,4 @@
-from django.contrib.auth import password_validation
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 
@@ -26,19 +24,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         return email
 
     def validate(self, values):
-        """Both passwords have to match and pass the configured validators."""
+        """Both passwords have to match."""
         if values['password'] != values['confirmed_password']:
             raise serializers.ValidationError('Passwords do not match')
-
-        # An unsaved user lets the similarity validator compare against
-        # username and email.
-        new_user = User(username=values['username'], email=values['email'])
-        try:
-            password_validation.validate_password(
-                values['password'], user=new_user)
-        except DjangoValidationError as e:
-            raise serializers.ValidationError({'password': e.messages})
-
         return values
 
     def save(self):

@@ -62,18 +62,6 @@ class RegistrationTests(AuthTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
 
-    def test_register_rejects_weak_password(self):
-        payload = {
-            **VALID_REGISTRATION,
-            "password": "12345678",
-            "confirmed_password": "12345678",
-        }
-
-        response = self.client.post(reverse('register'), payload)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("password", response.data)
-
     def test_register_rejects_duplicate_username(self):
         payload = {**VALID_REGISTRATION, "username": "tester"}
 
